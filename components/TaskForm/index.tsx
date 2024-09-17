@@ -85,7 +85,6 @@ const TaskForm: React.FC<TaskFormProps> = ({ initialValues, onSubmit, onCancel }
     <form onSubmit={handleSubmit(handleFormSubmit)} className="mb-4">
       <FormField
         label="Task Title"
-        placeholder="Task title"
         isListening={listeningField === 'title'}
         onToggleListening={() => toggleListening('title')}
         register={register('title')}
