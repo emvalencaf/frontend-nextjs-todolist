@@ -1,15 +1,3 @@
-// types/task.ts
-export interface TaskType {
-  id: number;
-  title: string;
-  description: string;
-  isDone: boolean;
-  createdAt: string;
-  updatedAt: string;
-  deadline?: string; // Adiciona o campo deadline
-}
-
-// types/taskSchema.ts
 import { z } from 'zod';
 
 export const taskSchema = z.object({

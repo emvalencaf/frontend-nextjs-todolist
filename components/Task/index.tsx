@@ -4,6 +4,7 @@ import { FaEdit, FaTrash, FaCheck, FaUndo } from 'react-icons/fa';
 import { TaskType } from '../../types/task';
 import TaskForm from '../TaskForm';
 import dayjs from 'dayjs';
+import Slider from 'react-slick';
 
 interface TaskProps {
   task: TaskType;
@@ -18,7 +19,7 @@ const Task: React.FC<TaskProps> = ({
   onUpdate,
   onToggleComplete
 }) => {
-  const { id, title, description, isDone, createdAt, updatedAt, deadline } = task;
+  const { id, title, description, isDone, createdAt, updatedAt, deadline, photos } = task;
   const [isEditing, setIsEditing] = useState(false);
 
   const handleUpdate = (newTitle: string, newDescription: string, newDeadline: string) => {
@@ -82,6 +83,17 @@ const Task: React.FC<TaskProps> = ({
             <p>Created at: {new Date(createdAt).toLocaleDateString()}</p>
             <p>Updated at: {new Date(updatedAt).toLocaleDateString()}</p>
           </div>
+          {photos.length > 0 && (
+            <div className="mt-4">
+              <Slider dots={true} infinite={true} speed={500} slidesToShow={1} slidesToScroll={1}>
+                {photos.map((photo, index) => (
+                  <div key={index}>
+                    <img src={photo} alt={`task-photo-${index}`} className="w-full h-auto object-cover rounded" />
+                  </div>
+                ))}
+              </Slider>
+            </div>
+          )}
         </>
       )}
     </div>

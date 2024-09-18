@@ -10,6 +10,7 @@ interface FormFieldProps {
   register: UseFormRegisterReturn;
   isTextarea?: boolean;
   isDate?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   control: Control<any>; // Adicione isto
 }
 

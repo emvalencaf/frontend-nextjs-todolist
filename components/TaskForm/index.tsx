@@ -7,7 +7,7 @@ import { Window } from '../../types/global';
 
 interface TaskFormProps {
   initialValues: TaskFormValues;
-  onSubmit: (title: string, description: string, deadline: string) => void;
+  onSubmit: (title: string, description: string, deadline: string, photos: string[]) => void;
   onCancel?: () => void;
 }
 
@@ -16,7 +16,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ initialValues, onSubmit, onCancel }
     register,
     handleSubmit,
     setValue,
-    control, // Adicione isto
+    control,
     formState: { errors },
     reset,
   } = useForm<TaskFormValues>({
@@ -24,8 +24,11 @@ const TaskForm: React.FC<TaskFormProps> = ({ initialValues, onSubmit, onCancel }
     defaultValues: initialValues,
   });
 
-  // Estado para rastrear o campo específico que está gravando
   const [listeningField, setListeningField] = useState<keyof TaskFormValues | null>(null);
+  const [photos, setPhotos] = useState<string[]>([]); // Estado para fotos
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const startRecognition = (field: keyof TaskFormValues) => {
@@ -37,15 +40,14 @@ const TaskForm: React.FC<TaskFormProps> = ({ initialValues, onSubmit, onCancel }
 
     if (!recognitionRef.current) {
       recognitionRef.current = new SpeechRecognition();
-      if (!recognitionRef.current) return;
-      recognitionRef.current.lang = 'pt-BR'; // Pode ser alterado para 'pt-BR'
+      recognitionRef.current.lang = 'pt-BR';
     }
 
     const recognition = recognitionRef.current;
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       const transcript = event.results[0][0].transcript;
-      setValue(field, transcript); // Preenche o campo com o texto transcrito
+      setValue(field, transcript);
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
@@ -77,8 +79,48 @@ const TaskForm: React.FC<TaskFormProps> = ({ initialValues, onSubmit, onCancel }
   };
 
   const handleFormSubmit = (data: TaskFormValues) => {
-    onSubmit(data.title, data.description, data.deadline); // Envio de dados
-    reset(); // Limpa o formulário após o envio
+    onSubmit(data.title, data.description, data.deadline, photos);
+    reset();
+    setPhotos([]); // Limpar fotos após o envio
+    stopCamera(); // Parar o stream da câmera após o envio
+  };
+
+  const handlePhotoCapture = async () => {
+    if (videoRef.current && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const video = videoRef.current;
+      const context = canvas.getContext('2d');
+      if (context) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0);
+        const photoUrl = canvas.toDataURL('image/png');
+        setPhotos(prevPhotos => [...prevPhotos, photoUrl]);
+      }
+    }
+  };
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+      }
+      setCameraStream(stream);
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+    }
+  };
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+      setCameraStream(null);
+    }
   };
 
   return (
@@ -89,7 +131,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ initialValues, onSubmit, onCancel }
         onToggleListening={() => toggleListening('title')}
         register={register('title')}
         error={errors.title?.message}
-        control={control} // Passe o control aqui
+        control={control}
       />
 
       <FormField
@@ -99,7 +141,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ initialValues, onSubmit, onCancel }
         register={register('description')}
         error={errors.description?.message}
         isTextarea
-        control={control} // Passe o control aqui
+        control={control}
       />
 
       <div className="mb-6">
@@ -107,10 +149,43 @@ const TaskForm: React.FC<TaskFormProps> = ({ initialValues, onSubmit, onCancel }
         <input
           type="datetime-local"
           {...register('deadline')}
-          className={`border p-2 rounded w-full focus:outline-none focus:ring-2 ${errors.deadline ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
-            }`}
+          className={`border p-2 rounded w-full focus:outline-none focus:ring-2 ${errors.deadline ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'}`}
         />
         {errors.deadline && <p className="text-red-500 text-sm mt-1">{errors.deadline.message}</p>}
+      </div>
+
+      <div className="mb-6">
+        <label className="block text-gray-700">Photos</label>
+        <button
+          type="button"
+          onClick={startCamera}
+          className="bg-blue-500 text-white px-4 py-2 rounded mr-2"
+        >
+          Start Camera
+        </button>
+        <button
+          type="button"
+          onClick={handlePhotoCapture}
+          className="bg-green-500 text-white px-4 py-2 rounded"
+        >
+          Capture Photo
+        </button>
+        <button
+          type="button"
+          onClick={stopCamera}
+          className="bg-red-500 text-white px-4 py-2 rounded ml-2"
+        >
+          Stop Camera
+        </button>
+        <div className="mt-2">
+          <video ref={videoRef} className="w-full h-auto border" />
+          <canvas ref={canvasRef} style={{ display: 'none' }} />
+        </div>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {photos.map((photo, index) => (
+            <img key={index} src={photo} alt={`photo-${index}`} className="w-24 h-24 object-cover rounded" />
+          ))}
+        </div>
       </div>
 
       <div className="flex justify-between">
