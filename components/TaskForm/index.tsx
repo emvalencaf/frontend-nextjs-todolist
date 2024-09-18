@@ -7,7 +7,7 @@ import { Window } from '../../types/global';
 
 interface TaskFormProps {
   initialValues: TaskFormValues;
-  onSubmit: (title: string, description: string) => void;
+  onSubmit: (title: string, description: string, deadline: string) => void;
   onCancel?: () => void;
 }
 
@@ -16,6 +16,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ initialValues, onSubmit, onCancel }
     register,
     handleSubmit,
     setValue,
+    control, // Adicione isto
     formState: { errors },
     reset,
   } = useForm<TaskFormValues>({
@@ -36,8 +37,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ initialValues, onSubmit, onCancel }
 
     if (!recognitionRef.current) {
       recognitionRef.current = new SpeechRecognition();
-      if (!recognitionRef.current)
-        return;
+      if (!recognitionRef.current) return;
       recognitionRef.current.lang = 'pt-BR'; // Pode ser alterado para 'pt-BR'
     }
 
@@ -77,7 +77,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ initialValues, onSubmit, onCancel }
   };
 
   const handleFormSubmit = (data: TaskFormValues) => {
-    onSubmit(data.title, data.description);
+    onSubmit(data.title, data.description, data.deadline); // Envio de dados
     reset(); // Limpa o formulário após o envio
   };
 
@@ -89,6 +89,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ initialValues, onSubmit, onCancel }
         onToggleListening={() => toggleListening('title')}
         register={register('title')}
         error={errors.title?.message}
+        control={control} // Passe o control aqui
       />
 
       <FormField
@@ -98,7 +99,19 @@ const TaskForm: React.FC<TaskFormProps> = ({ initialValues, onSubmit, onCancel }
         register={register('description')}
         error={errors.description?.message}
         isTextarea
+        control={control} // Passe o control aqui
       />
+
+      <div className="mb-6">
+        <label className="block text-gray-700">Deadline</label>
+        <input
+          type="datetime-local"
+          {...register('deadline')}
+          className={`border p-2 rounded w-full focus:outline-none focus:ring-2 ${errors.deadline ? 'border-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
+            }`}
+        />
+        {errors.deadline && <p className="text-red-500 text-sm mt-1">{errors.deadline.message}</p>}
+      </div>
 
       <div className="flex justify-between">
         <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
