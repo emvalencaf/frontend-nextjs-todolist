@@ -2,16 +2,15 @@ import { redirect } from "next/navigation";
 import { auth, signIn } from "../../../auth";
 import SignInTemplate from "../../../templates/SignIn";
 import { SignInParams } from "../../../actions/auth/schemas";
+import SignInDemoButton from "../../../components/SignInDemoButton";
 
 
 export default async function SignInPage() {
 
-    // const session = await auth();
+    const session = await auth();
 
-    // console.log(session);
-
-    // if (session)
-    //    return redirect('/');
+    if (session)
+        return redirect('/');
 
     const handleAction = async (params: SignInParams) => {
         "use server";
@@ -19,6 +18,22 @@ export default async function SignInPage() {
 
         return redirect('/');
     }
+    
+    const handleActionDemo = async () => {
+        "use server"
+        
+        const params = {
+            email: 'aocharle@gmail.com',
+            password: 'mysecurepassword1234',
+        }
 
-    return <SignInTemplate handleAction={handleAction} />
+        await signIn("credentials", params);
+
+        return redirect('/');
+    }    
+
+    return <>
+        <SignInTemplate handleAction={handleAction} />
+        <SignInDemoButton handleAction={handleActionDemo} />
+    </>
 }

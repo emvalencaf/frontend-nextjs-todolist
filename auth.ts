@@ -16,17 +16,18 @@ const configCredentialsOptions: CredentialsConfig = {
     
             // Fazendo a autenticação
             const res = await handleSignIn({ email, password });
+            console.log(res);
     
             if (!res || !res.user) {
                 throw new Error("Invalid email or password");
             }
     
             const { user, backendToken } = res;
-    
+            
             user.backendToken = backendToken;
     
             return user;
-            
+
         } catch (err) {
             console.log(err);
             throw new Error("Failed to authenticate user");

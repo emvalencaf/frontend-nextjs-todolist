@@ -11,8 +11,7 @@ export const handleSignIn = async (credentials: SignInParams) => {
         const res = await axios.post(`${BACKEND_URL}/auth/sign-in`, credentials);
 
         const data: PayloadSignIn = res.data;
-
-        console.log(data);
+        
         return {
             user: {
                 email: data.user.email,
